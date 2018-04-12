@@ -24,20 +24,21 @@ const semver = require('semver');
 
 export function npmPackageParser(name, requestedVersion, appContrib) {
   return parseNpmArguments(name, requestedVersion)
-    .then(npmVersionInfo => {
+    .then(npmVersionInfo => {   
+
       // check if we have a directory
-      if (npmVersionInfo.type === 'directory')
+      if (npmVersionInfo && npmVersionInfo.type === 'directory')
         return parseFileVersion(name, requestedVersion);
 
       // check if we have a github version
-      if (npmVersionInfo.type === 'git' && npmVersionInfo.hosted.type === 'github') {
+      if (npmVersionInfo && npmVersionInfo.type === 'git' && npmVersionInfo.hosted && npmVersionInfo.hosted.type === 'github') {
         return parseGithubVersion(
           name,
           npmVersionInfo.hosted.path({ noCommittish: false }),
           appContrib.githubTaggedCommits,
           customNpmGenerateVersion
         );
-      } else if (npmVersionInfo.type === 'git') {
+      } else if (npmVersionInfo && npmVersionInfo.type === 'git') {
         // TODO: implement raw git url support
         return PackageFactory.createPackageNotSupported(
           name,
@@ -172,7 +173,7 @@ export function customNpmGenerateVersion(packageInfo, newVersion) {
   let existingVersion
   // test if the newVersion is a valid semver range
   // if it is then we need to use the commitish for github versions 
-  if (packageInfo.meta.type === 'github' && semver.validRange(newVersion))
+  if (packageInfo && packageInfo.meta && packageInfo.meta.type === 'github' && semver.validRange(newVersion))
     existingVersion = packageInfo.meta.commitish
   else
     existingVersion = packageInfo.version
